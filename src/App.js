@@ -42,7 +42,16 @@ const App = () => {
     <div>
       <h1>My Hacker Stories</h1>
 
-      <Search search={searchTerm} onSearch={handleSearch}/>
+    <InputWithLabel
+      id='search'
+      // label='Search'
+      value={searchTerm}
+      onInputChange={handleSearch}
+    >
+      <strong>Search:</strong>
+    </InputWithLabel>
+
+      {/* <Search search={searchTerm} onSearch={handleSearch}/> */}
 
       <hr />
 
@@ -69,6 +78,19 @@ const Search = (props) => (
     </>
       // </div>
 );
+
+const InputWithLabel = ({id, label, value, type='text', onInputChange, children}) => (
+  <>
+    <label htmlFor={id}>{children}</label>
+    &nbsp;
+    <input
+      id={id}
+      type={type}
+      value={value}
+      onChange={onInputChange}
+    />
+  </>
+)
 
 /*
   concise bodyのテンプレート
