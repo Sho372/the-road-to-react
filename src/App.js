@@ -1,10 +1,5 @@
 import * as React from 'react';
 
-
-function getTitle(title) {
-  return title;
-}
-
 const App = () => {
 
   const stories = [
@@ -26,36 +21,51 @@ const App = () => {
     },
   ]
 
+//  const [searchTerm, setSearchTerm] = React.useState(localStorage.getItem('search'), 'React'); //これがhook. stateの管理に使う。関数コンポーネントで使える
+
+  const [searchTerm, setSearchTerm] = React.useState( localStorage.getItem('search') || 'React'); //これがhook. stateの管理に使う。関数コンポーネントで使える
+
+  React.useEffect(() => {
+    localStorage.setItem('search', searchTerm) //side-effect
+  }, [searchTerm])
+
+  const handleSearch = (event) => {
+    setSearchTerm(event.target.value) // state更新
+  }
+
+  //concise body
+  const searchStories = stories.filter( (story) =>  
+    story.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div>
       <h1>My Hacker Stories</h1>
-      <Search/>
+
+      <Search search={searchTerm} onSearch={handleSearch}/>
 
       <hr />
 
-      <List list={stories}/>
+      <List list={searchStories}/>
+
+      <p>
+        <strong>Output:</strong> {searchTerm}
+      </p>
     </div>
   );
 }
 
-const Search = () => {
-  const [searchTerm, setSearchTerm] = React.useState('');
-
-  const handleChange = (event) => {
-    setSearchTerm(event.target.value)
-  }
-
-  return (
+const Search = (props) => (
     <div>
       <label htmlFor="search">Search: </label>
-      <input id="search" type="text" onChange={handleChange}/>
+      
+      {/* uncontrolled component */}
+      <input id="search" type="text" onChange={props.onSearch}></input>
 
-      <p>
-        Searching for <strong>{searchTerm}</strong>
-      </p>
+      {/* controlled component */}
+      {/* <input id="search" type="text" value={props.search} onChange={props.onSearch}/> */}
     </div>
-  )
-}
+);
 
 /*
   concise bodyのテンプレート
