@@ -46,6 +46,7 @@ const App = () => {
       id='search'
       // label='Search'
       value={searchTerm}
+      isFocused
       onInputChange={handleSearch}
     >
       <strong>Search:</strong>
@@ -79,18 +80,38 @@ const Search = (props) => (
       // </div>
 );
 
-const InputWithLabel = ({id, label, value, type='text', onInputChange, children}) => (
-  <>
-    <label htmlFor={id}>{children}</label>
-    &nbsp;
-    <input
-      id={id}
-      type={type}
-      value={value}
-      onChange={onInputChange}
-    />
+const InputWithLabel = ({id, value, type='text', onInputChange, isFocused, children}) => {
+
+  //A refを用意
+  const inputRef = React.useRef();
+
+  //C
+  React.useEffect(() => {
+    if (isFocused && inputRef.current) { //input.Ref.currentに参照しているinputタグが入っている
+
+      //D
+      inputRef.current.focus();
+
+    }
+  }, {isFocused})
+
+  return(
+    <>
+      <label htmlFor={id}>{children}</label>
+      &nbsp;
+      <input
+        //B inputRefをref attributeで紐づける
+        ref={inputRef}
+        id={id}
+        type={type}
+        value={value}
+        autoFocus={isFocused} 
+        onChange={onInputChange}
+      />
   </>
-)
+
+  )
+}
 
 /*
   concise bodyのテンプレート
