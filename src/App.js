@@ -2,7 +2,7 @@ import * as React from 'react';
 
 const App = () => {
 
-  const stories = [
+  const initialStories = [
     {
       title: 'React',
       url: 'https://react.js.org/',
@@ -21,9 +21,26 @@ const App = () => {
     },
   ]
 
+  const getAsyncStories = () => 
+    new Promise((resolve) => 
+      setTimeout(
+        () => resolve({data: {stories: initialStories}}), 
+        2000
+      )
+    )
+
 //  const [searchTerm, setSearchTerm] = React.useState(localStorage.getItem('search'), 'React'); //これがhook. stateの管理に使う。関数コンポーネントで使える
 
   const [searchTerm, setSearchTerm] = React.useState( localStorage.getItem('search') || 'React'); //これがhook. stateの管理に使う。関数コンポーネントで使える
+
+  //APIで取得したデータを格納するstate
+  const [stories, setStories] = React.useState([]);
+
+  React.useEffect(() => {
+    getAsyncStories().then(result => {
+      setStories(result.data.stories)
+    })
+  }, [])
 
   React.useEffect(() => {
     localStorage.setItem('search', searchTerm) //side-effect
@@ -65,20 +82,20 @@ const App = () => {
   );
 }
 
-const Search = (props) => (
-    // <div>
-    // React Fragments
-    <>
-      <label htmlFor="search">Search: </label>
+// const Search = (props) => (
+//     // <div>
+//     // React Fragments
+//     <>
+//       <label htmlFor="search">Search: </label>
       
-      {/* uncontrolled component */}
-      <input id="search" type="text" onChange={props.onSearch}></input>
+//       {/* uncontrolled component */}
+//       <input id="search" type="text" onChange={props.onSearch}></input>
 
-      {/* controlled component */}
-      {/* <input id="search" type="text" value={props.search} onChange={props.onSearch}/> */}
-    </>
-      // </div>
-);
+//       {/* controlled component */}
+//       {/* <input id="search" type="text" value={props.search} onChange={props.onSearch}/> */}
+//     </>
+//       // </div>
+// );
 
 const InputWithLabel = ({id, value, type='text', onInputChange, isFocused, children}) => {
 
