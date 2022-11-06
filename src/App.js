@@ -56,7 +56,9 @@ const App = () => {
 }
 
 const Search = (props) => (
-    <div>
+    // <div>
+    // React Fragments
+    <>
       <label htmlFor="search">Search: </label>
       
       {/* uncontrolled component */}
@@ -64,7 +66,8 @@ const Search = (props) => (
 
       {/* controlled component */}
       {/* <input id="search" type="text" value={props.search} onChange={props.onSearch}/> */}
-    </div>
+    </>
+      // </div>
 );
 
 /*
