@@ -32,15 +32,52 @@ const App = () => {
 //  const [searchTerm, setSearchTerm] = React.useState(localStorage.getItem('search'), 'React'); //これがhook. stateの管理に使う。関数コンポーネントで使える
 
   const [searchTerm, setSearchTerm] = React.useState( localStorage.getItem('search') || 'React'); //これがhook. stateの管理に使う。関数コンポーネントで使える
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [isError, setIsError] = React.useState(false);
+
+  // reducer
+  const storiesReducer = (state, action) => {
+    switch(action.type) {
+      case 'SET_STORIES':
+        return action.playload
+      case 'REMOVE_STORY':
+        return state.filter(
+          (story) => action.playload.objectID !== story.objectID
+        );
+      default:
+        throw new Error();
+    }
+    // if(action.type === 'SET_STORIES') {
+    //   return action.playload;
+    // } else {
+    //   throw new Error();
+    // }
+  }
 
   //APIで取得したデータを格納するstate
-  const [stories, setStories] = React.useState([]);
+  // const [stories, setStories] = React.useState([]);
+  
+  // useStateではなく、useReducerでstateを管理
+  const [stories, dispatchStories] = React.useReducer(
+    storiesReducer, // recuder
+    [] // stateの初期値
+  )
 
   React.useEffect(() => {
-    getAsyncStories().then(result => {
-      setStories(result.data.stories)
-    })
-  }, [])
+      setIsLoading(true);
+
+    getAsyncStories()
+      .then((result) => {
+        // setStories(result.data.stories)
+
+        dispatchStories({
+          type: 'SET_STORIES',
+          playload: result.data.stories,
+        })
+        setIsLoading(false);
+      })
+      .catch(() => setIsError(true))
+  }, []) //空配列なので、side-effect(ここではdispatch実行)は初回のみ
 
   React.useEffect(() => {
     localStorage.setItem('search', searchTerm) //side-effect
@@ -48,6 +85,19 @@ const App = () => {
 
   const handleSearch = (event) => {
     setSearchTerm(event.target.value) // state更新
+  }
+
+  const handleRemoveStory = (item) => {
+    // const newStories = stories.filter(
+    //   //選択したitem以外のitemを抽出する
+    //   (story) => item.objectID !== story.objectID
+    // )
+
+    //処理をreducerに任せる
+    dispatchStories({
+      type: 'REMOVE_STORY',
+      playload: item,
+    })
   }
 
   //concise body
@@ -73,7 +123,13 @@ const App = () => {
 
       <hr />
 
-      <List list={searchStories}/>
+      {isError && <p>Something went wrong...</p>}
+
+      {isLoading ? (
+        <p>Loading...</p>
+      ):(
+        <List list={searchStories} onRemoveItem={handleRemoveStory}/>
+      )}
 
       <p>
         <strong>Output:</strong> {searchTerm}
@@ -145,24 +201,38 @@ const InputWithLabel = ({id, value, type='text', onInputChange, isFocused, child
 
 */
 
-const List = (props) => ( 
+const List = ({list, onRemoveItem}) => ( 
     <ul>
-      {props.list.map((item) => (
-        <Item key={item.objectID} item={item}/>
+      {list.map((item) => (
+        <Item 
+          key={item.objectID} 
+          item={item} 
+          onRemoveItem={onRemoveItem}/>
       ))}
     </ul>
 )
 
-const Item = (props) => (
-  <li key={props.key}>
+const Item = ({item, onRemoveItem}) => {
+  const handleRemoveItem = () => {
+    onRemoveItem(item)
+  }
+
+  return (
+  <li>
     <span>
-      <a href={props.item.url}>{props.item.title}</a>
+      <a href={item.url}>{item.title}</a>
     </span>
-    <span>{props.item.autohr}</span>
-    <span>{props.item.num_comments}</span>
-    <span>{props.item.points}</span>
+    <span>{item.autohr}</span>
+    <span>{item.num_comments}</span>
+    <span>{item.points}</span>
+    <span>
+      <button type="button" onClick={handleRemoveItem}>
+        Dismiss
+      </button>
+    </span>
   </li>
-)
+  )
+}
 
 //const List = () => { 
 //  return(
