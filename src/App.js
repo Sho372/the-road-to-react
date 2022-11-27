@@ -2,48 +2,72 @@ import * as React from 'react';
 
 const App = () => {
 
-  const initialStories = [
-    {
-      title: 'React',
-      url: 'https://react.js.org/',
-      autohr: 'Jordan Walke',
-      num_comments: 3,
-      points: 4,
-      objectID: 0,
-    },
-    {
-      title: 'Redux',
-      url: 'https://redux.js.org/',
-      autohr: 'Dan Abramov, Andrew Clark',
-      num_comments: 2,
-      points: 5,
-      objectID: 1,
-    },
-  ]
+  // const initialStories = [
+  //   {
+  //     title: 'React',
+  //     url: 'https://react.js.org/',
+  //     autohr: 'Jordan Walke',
+  //     num_comments: 3,
+  //     points: 4,
+  //     objectID: 0,
+  //   },
+  //   {
+  //     title: 'Redux',
+  //     url: 'https://redux.js.org/',
+  //     autohr: 'Dan Abramov, Andrew Clark',
+  //     num_comments: 2,
+  //     points: 5,
+  //     objectID: 1,
+  //   },
+  // ]
+
+  //const getAsyncStories = () => 
+    //new Promise((resolve) => 
+      //setTimeout(
+        //() => resolve({data: {stories: initialStories}}), 
+        //2000
+      //)
+    //)
 
   const getAsyncStories = () => 
-    new Promise((resolve) => 
-      setTimeout(
-        () => resolve({data: {stories: initialStories}}), 
-        2000
-      )
-    )
+    new Promise((resolve, reject) => setTimeout(reject, 2000));
 
 //  const [searchTerm, setSearchTerm] = React.useState(localStorage.getItem('search'), 'React'); //これがhook. stateの管理に使う。関数コンポーネントで使える
 
   const [searchTerm, setSearchTerm] = React.useState( localStorage.getItem('search') || 'React'); //これがhook. stateの管理に使う。関数コンポーネントで使える
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [isError, setIsError] = React.useState(false);
+  // const [isLoading, setIsLoading] = React.useState(false);
+  // const [isError, setIsError] = React.useState(false);
 
   // reducer
   const storiesReducer = (state, action) => {
     switch(action.type) {
-      case 'SET_STORIES':
-        return action.playload
+      case 'STORIES_FETCH_INIT':
+        return {
+          // spread operator => copy object and update properties
+          ...state,
+          isLoading: true,
+          isError: false,
+        };
+      case 'STORIES_FETCH_SUCCESS':
+        return {
+          ...state,
+          isLoading: false,
+          isError: false,
+          data: action.payload, //action.payloadにdispatchに渡された任意の引数が入っている
+        }
+      case 'STORIES_FETCH_FAILURE':
+        return {
+          ...state,
+          isLoading: false,
+          isError: true,
+        }
       case 'REMOVE_STORY':
-        return state.filter(
-          (story) => action.playload.objectID !== story.objectID
-        );
+        return {
+          ...state,
+          data: state.data.filter(
+            (story) => action.payload.objectID !== story.objectID
+          ),
+        }
       default:
         throw new Error();
     }
@@ -60,23 +84,24 @@ const App = () => {
   // useStateではなく、useReducerでstateを管理
   const [stories, dispatchStories] = React.useReducer(
     storiesReducer, // recuder
-    [] // stateの初期値
+    {data: [], isLoading: false, isError: false} // stateの初期値
   )
 
   React.useEffect(() => {
-      setIsLoading(true);
+    // setIsLoading(true);
+
+    dispatchStories({type: 'STORIES_FETCH_INIT'});
 
     getAsyncStories()
       .then((result) => {
         // setStories(result.data.stories)
 
         dispatchStories({
-          type: 'SET_STORIES',
+          type: 'STORIES_FETCH_SUCCESS',
           playload: result.data.stories,
         })
-        setIsLoading(false);
       })
-      .catch(() => setIsError(true))
+      .catch(() => dispatchStories({type: 'STORIES_FETCH_FAILURE'}))
   }, []) //空配列なので、side-effect(ここではdispatch実行)は初回のみ
 
   React.useEffect(() => {
@@ -101,7 +126,7 @@ const App = () => {
   }
 
   //concise body
-  const searchStories = stories.filter( (story) =>  
+  const searchStories = stories.data.filter( (story) =>  
     story.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -123,9 +148,9 @@ const App = () => {
 
       <hr />
 
-      {isError && <p>Something went wrong...</p>}
+      {stories.isError && <p>Something went wrong...</p>}
 
-      {isLoading ? (
+      {stories.isLoading ? (
         <p>Loading...</p>
       ):(
         <List list={searchStories} onRemoveItem={handleRemoveStory}/>
